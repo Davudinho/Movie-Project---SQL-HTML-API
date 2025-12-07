@@ -20,14 +20,18 @@ engine = create_engine(f"sqlite:///{DB_PATH}", echo=False)
 
 def create_table():
     with engine.connect() as connection:
-        connection.execute(text("""
-            CREATE TABLE IF NOT EXISTS movies (
-                title TEXT PRIMARY KEY,
-                year TEXT,
-                rating TEXT,
-                poster TEXT
-            );
-        """))
+        try:
+            connection.execute(text("""
+                CREATE TABLE IF NOT EXISTS movies (
+                    title TEXT PRIMARY KEY,
+                    year TEXT,
+                    rating TEXT,
+                    poster TEXT
+                );
+            """))
+            connection.commit()
+        except Exception:
+            print("Error creating table.")
 
 
 create_table()
@@ -52,13 +56,17 @@ def list_movies():
 
 def add_movie(title, year, rating, poster):
     with engine.connect() as connection:
-        connection.execute(
-            text("""
-                INSERT INTO movies (title, year, rating, poster)
-                VALUES (:title, :year, :rating, :poster)
-            """),
-            {"title": title, "year": year, "rating": rating, "poster": poster}
-        )
+        try:
+            connection.execute(
+                text("""
+                    INSERT INTO movies (title, year, rating, poster)
+                    VALUES (:title, :year, :rating, :poster)
+                """),
+                {"title": title, "year": year, "rating": rating, "poster": poster}
+            )
+            connection.commit()
+        except Exception:
+            print(f"Error adding movie '{title}'.")
 
 
 def delete_movie(title: str) -> bool:
@@ -66,11 +74,15 @@ def delete_movie(title: str) -> bool:
         raise TypeError("title must be a string")
 
     with engine.connect() as connection:
-        result = connection.execute(
-            text("DELETE FROM movies WHERE title = :title"),
-            {"title": title}
-        )
-        return result.rowcount > 0
+        try:
+            result = connection.execute(
+                text("DELETE FROM movies WHERE title = :title"),
+                {"title": title}
+            )
+            connection.commit()
+            return result.rowcount > 0
+        except Exception:
+            return False
 
 
 def update_movie(title: str, new_rating: int | float) -> bool:
@@ -84,14 +96,19 @@ def update_movie(title: str, new_rating: int | float) -> bool:
         raise ValueError("new_rating must be between 0 and 10")
 
     with engine.connect() as connection:
-        result = connection.execute(
-            text("""
-                UPDATE movies SET rating = :rating
-                WHERE title = :title
-            """),
-            {"rating": new_rating, "title": title}
-        )
-        return result.rowcount > 0
+        try:
+            result = connection.execute(
+                text("""
+                    UPDATE movies
+                    SET rating = :rating
+                    WHERE title = :title
+                """),
+                {"rating": new_rating, "title": title}
+            )
+            connection.commit()
+            return result.rowcount > 0
+        except Exception:
+            return False
 
 
 def get_movie_poster(title):
