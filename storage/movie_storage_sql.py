@@ -12,7 +12,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_FOLDER = os.path.join(BASE_DIR, "data")
 DB_PATH = os.path.join(DB_FOLDER, "movies.db")
 
-
 os.makedirs(DB_FOLDER, exist_ok=True)
 
 engine = create_engine(f"sqlite:///{DB_PATH}", echo=False)
@@ -128,3 +127,30 @@ def get_movie_poster(title):
 
     except requests.exceptions.RequestException:
         return "https://via.placeholder.com/300x450?text=Error"
+
+
+def fetch_movie_from_api(title):
+    """Fetch movie data (year, rating, poster) from OMDb API."""
+    if API_KEY is None:
+        return None
+
+    try:
+        response = requests.get(
+            "http://www.omdbapi.com/",
+            params={"apikey": API_KEY, "t": title},
+            timeout=5
+        )
+        data = response.json()
+
+        if data.get("Response") == "False":
+            return None
+
+        return {
+            "title": data["Title"],
+            "year": data["Year"],
+            "rating": data["imdbRating"],
+            "poster": data["Poster"]
+        }
+
+    except Exception:
+        return None

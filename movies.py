@@ -18,15 +18,23 @@ def command_list_movies():
 
 
 def command_add_movie():
-    """Add a new movie to the database."""
+    """Add a new movie using OMDb API."""
     title = input("Enter movie title: ").strip()
-    year = input("Enter release year: ").strip()
-    rating = input("Enter rating (0–10): ").strip()
 
-    poster = storage.get_movie_poster(title)  # OMDb API
+    movie = storage.fetch_movie_from_api(title)
 
-    storage.add_movie(title, year, rating, poster)
-    print(f"Movie '{title}' was added successfully.")
+    if movie is None:
+        print("Movie not found via OMDb API.")
+        return
+
+    storage.add_movie(
+        movie["title"],
+        movie["year"],
+        movie["rating"],
+        movie["poster"]
+    )
+
+    print(f"Movie '{movie['title']}' was added successfully.")
 
 
 def command_delete_movie():
